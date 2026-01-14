@@ -191,28 +191,52 @@ src/
 These endpoints are implemented as Next.js Route Handlers under `src/app/api/`. When `NEXT_PUBLIC_MOCK_MODE=true`, the browser UI uses `src/lib/api/mock-adapter.js` + fixtures instead of calling these routes.
 
 ### Authentication
+
 - `GET /api/auth/me` - Current user + GitHub connection status
-- `POST /api/auth/github/connect` - Start OAuth flow
+- `PATCH /api/auth/profile` - Update profile (e.g. name)
+- `GET /api/auth/github/connect` - Start OAuth flow
+- `POST /api/auth/github/connect` - Complete OAuth initiation from the app
 - `POST /api/auth/github/pat` - Connect with PAT
 - `POST /api/auth/github/disconnect` - Disconnect GitHub
+- `GET /api/auth/github/callback` - GitHub OAuth callback
+- `GET /api/auth/:...nextauth` - NextAuth core routes (sessions, callbacks, etc.)
 
 ### Projects
+
 - `GET /api/projects` - List projects
 - `POST /api/projects` - Create project
-- `GET /api/projects/:id` - Get project
-- `GET /api/projects/:id/settings` - Get settings
-- `PUT /api/projects/:id/settings` - Update settings
+- `GET /api/projects/:projectId` - Get project
+- `PUT /api/projects/:projectId` - Update project
+- `DELETE /api/projects/:projectId` - Delete project
+- `GET /api/projects/:projectId/settings` - Get settings
+- `PUT /api/projects/:projectId/settings` - Update settings
+- `GET /api/projects/:projectId/drift` - Get documentation drift summary
+- `POST /api/projects/:projectId/scan` - Run scan now
+- `GET /api/projects/:projectId/scans` - List scans
+- `GET /api/projects/:projectId/scans/:scanId` - Get scan details
+- `POST /api/projects/:projectId/ai/generate` - Generate documentation proposals for a project
 
-### Scans & Proposals
-- `POST /api/projects/:id/scan` - Run scan now
-- `GET /api/projects/:id/scans` - List scans
-- `GET /api/projects/:id/proposals` - List proposals
-- `POST /api/projects/:id/proposals/:id/approve` - Approve
-- `POST /api/projects/:id/proposals/:id/reject` - Reject
-- `POST /api/projects/:id/proposals/:id/publish` - Publish to GitHub
+### Proposals
+
+- `GET /api/projects/:projectId/proposals` - List proposals
+- `GET /api/projects/:projectId/proposals/:proposalId` - Get proposal
+- `POST /api/projects/:projectId/proposals/:proposalId/approve` - Approve proposal
+- `POST /api/projects/:projectId/proposals/:proposalId/reject` - Reject proposal
+- `POST /api/projects/:projectId/proposals/:proposalId/publish` - Publish to GitHub
+- `GET /api/projects/:projectId/proposals/:proposalId/regenerate` - Regenerate proposal content
 
 ### AI Service
+
 - `GET /api/ai/status` - Check if AI is configured
+
+### Cron
+
+- `GET /api/cron/scans` - Trigger scheduled scans (with `CRON_SECRET`)
+- `POST /api/cron/scans` - Trigger scheduled scans (with `CRON_SECRET`)
+
+### GitHub Helper
+
+- `GET /api/github/repos` - List GitHub repositories for the connected account
 
 ## Security Notes
 
