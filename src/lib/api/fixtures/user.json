@@ -1,0 +1,16 @@
+{
+  "user": {
+    "id": "user_01",
+    "email": "developer@nexusdocs.io",
+    "name": "Alex Developer",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  "githubConnection": {
+    "status": "connected",
+    "method": "oauth",
+    "lastValidatedAt": "2026-01-13T15:00:00Z",
+    "scopes": ["repo", "read:org", "read:user"],
+    "username": "alexdev"
+  }
+}

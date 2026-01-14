@@ -1,0 +1,169 @@
+{
+  "scans": [
+    {
+      "id": "scan_001",
+      "projectId": "proj_001",
+      "status": "succeeded",
+      "source": "scheduled",
+      "startedAt": "2026-01-13T14:30:00Z",
+      "finishedAt": "2026-01-13T14:32:15Z",
+      "commits": [
+        {
+          "sha": "abc123",
+          "message": "feat: add new chart component for data visualization",
+          "authorName": "Alex Developer",
+          "timestamp": "2026-01-13T12:00:00Z",
+          "changedFiles": ["src/components/Chart.jsx", "src/components/Chart.css"]
+        },
+        {
+          "sha": "def456",
+          "message": "refactor: update dashboard layout for better responsiveness",
+          "authorName": "Alex Developer",
+          "timestamp": "2026-01-13T10:30:00Z",
+          "changedFiles": ["src/layouts/Dashboard.jsx", "src/styles/layout.css"]
+        }
+      ],
+      "pullRequests": [
+        {
+          "number": 42,
+          "title": "Feature: Advanced filtering options",
+          "state": "merged",
+          "authorName": "contributor_1",
+          "mergedAt": "2026-01-13T09:00:00Z"
+        }
+      ],
+      "driftItemsCreated": 3
+    },
+    {
+      "id": "scan_002",
+      "projectId": "proj_001",
+      "status": "succeeded",
+      "source": "manual",
+      "startedAt": "2026-01-12T16:00:00Z",
+      "finishedAt": "2026-01-12T16:01:30Z",
+      "commits": [
+        {
+          "sha": "ghi789",
+          "message": "fix: correct table sorting behavior",
+          "authorName": "Alex Developer",
+          "timestamp": "2026-01-12T14:00:00Z",
+          "changedFiles": ["src/components/DataTable.jsx"]
+        }
+      ],
+      "pullRequests": [],
+      "driftItemsCreated": 1
+    },
+    {
+      "id": "scan_003",
+      "projectId": "proj_001",
+      "status": "failed",
+      "source": "scheduled",
+      "startedAt": "2026-01-11T14:30:00Z",
+      "finishedAt": "2026-01-11T14:31:00Z",
+      "commits": [],
+      "pullRequests": [],
+      "driftItemsCreated": 0,
+      "errorMessage": "GitHub API rate limit exceeded. Please try again later."
+    },
+    {
+      "id": "scan_004",
+      "projectId": "proj_002",
+      "status": "succeeded",
+      "source": "scheduled",
+      "startedAt": "2026-01-13T10:00:00Z",
+      "finishedAt": "2026-01-13T10:02:00Z",
+      "commits": [
+        {
+          "sha": "jkl012",
+          "message": "feat: implement request caching layer",
+          "authorName": "Alex Developer",
+          "timestamp": "2026-01-13T08:00:00Z",
+          "changedFiles": ["src/middleware/cache.go", "src/config/cache.go"]
+        }
+      ],
+      "pullRequests": [],
+      "driftItemsCreated": 1
+    },
+    {
+      "id": "scan_005",
+      "projectId": "proj_002",
+      "status": "running",
+      "source": "manual",
+      "startedAt": "2026-01-13T15:45:00Z",
+      "finishedAt": null,
+      "commits": [],
+      "pullRequests": [],
+      "driftItemsCreated": 0
+    }
+  ],
+  "driftItems": [
+    {
+      "id": "drift_001",
+      "scanId": "scan_001",
+      "projectId": "proj_001",
+      "title": "New Chart component undocumented",
+      "area": "Components",
+      "evidence": {
+        "changedFiles": ["src/components/Chart.jsx", "src/components/Chart.css"],
+        "commitSummaries": ["feat: add new chart component for data visualization"],
+        "relevantCode": "export function Chart({ data, type, options }) { ... }"
+      },
+      "suggestedTargets": ["docs/components/chart.md", "README.md"],
+      "confidence": 92,
+      "severity": "high",
+      "resolved": false,
+      "createdAt": "2026-01-13T14:32:00Z"
+    },
+    {
+      "id": "drift_002",
+      "scanId": "scan_001",
+      "projectId": "proj_001",
+      "title": "Dashboard layout changes not reflected in docs",
+      "area": "Layouts",
+      "evidence": {
+        "changedFiles": ["src/layouts/Dashboard.jsx", "src/styles/layout.css"],
+        "commitSummaries": ["refactor: update dashboard layout for better responsiveness"],
+        "relevantCode": null
+      },
+      "suggestedTargets": ["docs/layouts/dashboard.md"],
+      "confidence": 78,
+      "severity": "medium",
+      "resolved": false,
+      "createdAt": "2026-01-13T14:32:05Z"
+    },
+    {
+      "id": "drift_003",
+      "scanId": "scan_001",
+      "projectId": "proj_001",
+      "title": "Filtering feature from PR #42 needs documentation",
+      "area": "Features",
+      "evidence": {
+        "changedFiles": ["src/components/Filter.jsx", "src/hooks/useFilter.js"],
+        "commitSummaries": ["Feature: Advanced filtering options"],
+        "relevantCode": null
+      },
+      "suggestedTargets": ["docs/features/filtering.md", "README.md"],
+      "confidence": 95,
+      "severity": "high",
+      "resolved": false,
+      "createdAt": "2026-01-13T14:32:10Z"
+    },
+    {
+      "id": "drift_004",
+      "scanId": "scan_004",
+      "projectId": "proj_002",
+      "title": "Caching layer implementation needs API docs update",
+      "area": "Middleware",
+      "evidence": {
+        "changedFiles": ["src/middleware/cache.go", "src/config/cache.go"],
+        "commitSummaries": ["feat: implement request caching layer"],
+        "relevantCode": "type CacheConfig struct { TTL time.Duration; MaxSize int }"
+      },
+      "suggestedTargets": ["docs/api/middleware.md", "README.md"],
+      "confidence": 88,
+      "severity": "high",
+      "resolved": false,
+      "createdAt": "2026-01-13T10:02:00Z"
+    }
+  ]
+}

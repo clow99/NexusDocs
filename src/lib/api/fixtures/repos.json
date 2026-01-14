@@ -1,0 +1,70 @@
+{
+  "repos": [
+    {
+      "id": "repo_1",
+      "name": "react-dashboard",
+      "fullName": "alexdev/react-dashboard",
+      "owner": "alexdev",
+      "description": "A modern React dashboard template with charts, tables, and forms",
+      "defaultBranch": "main",
+      "private": false,
+      "htmlUrl": "https://github.com/alexdev/react-dashboard",
+      "updatedAt": "2026-01-12T14:30:00Z"
+    },
+    {
+      "id": "repo_2",
+      "name": "api-gateway",
+      "fullName": "alexdev/api-gateway",
+      "owner": "alexdev",
+      "description": "High-performance API gateway with rate limiting and caching",
+      "defaultBranch": "main",
+      "private": true,
+      "htmlUrl": "https://github.com/alexdev/api-gateway",
+      "updatedAt": "2026-01-11T09:15:00Z"
+    },
+    {
+      "id": "repo_3",
+      "name": "ml-pipeline",
+      "fullName": "alexdev/ml-pipeline",
+      "owner": "alexdev",
+      "description": "Machine learning data pipeline with preprocessing and model training",
+      "defaultBranch": "develop",
+      "private": true,
+      "htmlUrl": "https://github.com/alexdev/ml-pipeline",
+      "updatedAt": "2026-01-10T18:45:00Z"
+    },
+    {
+      "id": "repo_4",
+      "name": "design-system",
+      "fullName": "acme-corp/design-system",
+      "owner": "acme-corp",
+      "description": "Company-wide design system with React components",
+      "defaultBranch": "main",
+      "private": false,
+      "htmlUrl": "https://github.com/acme-corp/design-system",
+      "updatedAt": "2026-01-09T11:20:00Z"
+    },
+    {
+      "id": "repo_5",
+      "name": "backend-services",
+      "fullName": "acme-corp/backend-services",
+      "owner": "acme-corp",
+      "description": "Microservices backend with authentication and data services",
+      "defaultBranch": "main",
+      "private": true,
+      "htmlUrl": "https://github.com/acme-corp/backend-services",
+      "updatedAt": "2026-01-08T16:00:00Z"
+    },
+    {
+      "id": "repo_6",
+      "name": "mobile-app",
+      "fullName": "acme-corp/mobile-app",
+      "owner": "acme-corp",
+      "description": "Cross-platform mobile app built with React Native",
+      "defaultBranch": "main",
+      "private": true,
+      "htmlUrl": "https://github.com/acme-corp/mobile-app",
+      "updatedAt": "2026-01-07T13:30:00Z"
+    }
+  ]
+}

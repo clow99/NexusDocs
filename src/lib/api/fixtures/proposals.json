@@ -1,0 +1,127 @@
+{
+  "proposals": [
+    {
+      "id": "prop_001",
+      "projectId": "proj_001",
+      "status": "pending",
+      "summary": "Add documentation for the new Chart component including props, usage examples, and customization options.",
+      "createdAt": "2026-01-13T14:35:00Z",
+      "scanId": "scan_001",
+      "driftItemIds": ["drift_001"],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.1.0-abc123",
+      "files": [
+        {
+          "path": "docs/components/chart.md",
+          "before": "",
+          "after": "# Chart Component\n\nA flexible charting component for data visualization.\n\n## Installation\n\nThe Chart component is included in the core package.\n\n## Usage\n\n```jsx\nimport { Chart } from '@/components/Chart';\n\nfunction Dashboard() {\n  const data = [\n    { label: 'Jan', value: 100 },\n    { label: 'Feb', value: 150 },\n    { label: 'Mar', value: 120 },\n  ];\n\n  return (\n    <Chart\n      data={data}\n      type=\"bar\"\n      options={{ showLegend: true }}\n    />\n  );\n}\n```\n\n## Props\n\n| Prop | Type | Default | Description |\n|------|------|---------|-------------|\n| `data` | `Array` | required | Array of data points |\n| `type` | `'bar' \\| 'line' \\| 'pie'` | `'bar'` | Chart type |\n| `options` | `Object` | `{}` | Chart options |\n\n## Chart Types\n\n### Bar Chart\n\nIdeal for comparing discrete categories.\n\n### Line Chart\n\nBest for showing trends over time.\n\n### Pie Chart\n\nUseful for showing proportions of a whole.\n",
+          "diff": "@@ -0,0 +1,45 @@\n+# Chart Component\n+\n+A flexible charting component for data visualization.\n+\n+## Installation\n+\n+The Chart component is included in the core package.\n+\n+## Usage\n+\n+```jsx\n+import { Chart } from '@/components/Chart';\n+\n+function Dashboard() {\n+  const data = [\n+    { label: 'Jan', value: 100 },\n+    { label: 'Feb', value: 150 },\n+    { label: 'Mar', value: 120 },\n+  ];\n+\n+  return (\n+    <Chart\n+      data={data}\n+      type=\"bar\"\n+      options={{ showLegend: true }}\n+    />\n+  );\n+}\n+```\n+\n+## Props\n+\n+| Prop | Type | Default | Description |\n+|------|------|---------|-------------|\n+| `data` | `Array` | required | Array of data points |\n+| `type` | `'bar' \\| 'line' \\| 'pie'` | `'bar'` | Chart type |\n+| `options` | `Object` | `{}` | Chart options |\n"
+        },
+        {
+          "path": "README.md",
+          "before": "# React Dashboard\n\nA modern React dashboard template with charts, tables, and forms.\n\n## Features\n\n- Responsive design\n- Dark mode support\n- Data tables with sorting and filtering\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```\n\n## Documentation\n\nSee the `/docs` folder for detailed documentation.\n",
+          "after": "# React Dashboard\n\nA modern React dashboard template with charts, tables, and forms.\n\n## Features\n\n- Responsive design\n- Dark mode support\n- Data tables with sorting and filtering\n- **Chart component** for data visualization (bar, line, pie)\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```\n\n## Components\n\n### Chart\n\nFlexible charting component supporting multiple chart types. See [Chart Documentation](./docs/components/chart.md).\n\n## Documentation\n\nSee the `/docs` folder for detailed documentation.\n",
+          "diff": "@@ -6,6 +6,7 @@\n - Responsive design\n - Dark mode support\n - Data tables with sorting and filtering\n+- **Chart component** for data visualization (bar, line, pie)\n \n ## Getting Started\n \n@@ -13,5 +14,11 @@ npm install\n npm run dev\n ```\n \n+## Components\n+\n+### Chart\n+\n+Flexible charting component supporting multiple chart types. See [Chart Documentation](./docs/components/chart.md).\n+\n ## Documentation\n \n See the `/docs` folder for detailed documentation.\n"
+        }
+      ]
+    },
+    {
+      "id": "prop_002",
+      "projectId": "proj_001",
+      "status": "pending",
+      "summary": "Update filtering documentation to reflect the new advanced filtering options from PR #42.",
+      "createdAt": "2026-01-13T14:40:00Z",
+      "scanId": "scan_001",
+      "driftItemIds": ["drift_003"],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.1.0-abc123",
+      "files": [
+        {
+          "path": "docs/features/filtering.md",
+          "before": "# Filtering\n\nBasic filtering is available on all data tables.\n\n## Usage\n\nClick the filter icon to open the filter panel.\n",
+          "after": "# Filtering\n\nAdvanced filtering is available on all data tables with support for multiple conditions.\n\n## Usage\n\nClick the filter icon to open the filter panel.\n\n## Filter Types\n\n### Text Filters\n\n- Contains\n- Equals\n- Starts with\n- Ends with\n\n### Number Filters\n\n- Equals\n- Greater than\n- Less than\n- Between\n\n### Date Filters\n\n- Before\n- After\n- Between\n\n## Combining Filters\n\nMultiple filters can be combined using AND/OR logic:\n\n```jsx\nconst filters = [\n  { field: 'status', operator: 'equals', value: 'active' },\n  { field: 'amount', operator: 'gt', value: 1000 },\n];\n\n<DataTable filters={filters} filterLogic=\"and\" />\n```\n\n## Saving Filters\n\nFilters can be saved for reuse. Click \"Save Filter\" to name and store your current filter configuration.\n",
+          "diff": "@@ -1,7 +1,37 @@\n # Filtering\n \n-Basic filtering is available on all data tables.\n+Advanced filtering is available on all data tables with support for multiple conditions.\n \n ## Usage\n \n Click the filter icon to open the filter panel.\n+\n+## Filter Types\n+\n+### Text Filters\n+\n+- Contains\n+- Equals\n+- Starts with\n+- Ends with\n+\n+### Number Filters\n+\n+- Equals\n+- Greater than\n+- Less than\n+- Between\n+\n+### Date Filters\n+\n+- Before\n+- After\n+- Between\n+\n+## Combining Filters\n+\n+Multiple filters can be combined using AND/OR logic.\n"
+        }
+      ]
+    },
+    {
+      "id": "prop_003",
+      "projectId": "proj_002",
+      "status": "pending",
+      "summary": "Document the new caching layer middleware including configuration options and cache invalidation.",
+      "createdAt": "2026-01-13T10:05:00Z",
+      "scanId": "scan_004",
+      "driftItemIds": ["drift_004"],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.1.0-abc123",
+      "files": [
+        {
+          "path": "docs/api/middleware.md",
+          "before": "# Middleware\n\nThe API Gateway includes several middleware components.\n\n## Rate Limiting\n\nRate limiting protects the API from abuse.\n\n## Authentication\n\nJWT-based authentication is supported.\n",
+          "after": "# Middleware\n\nThe API Gateway includes several middleware components.\n\n## Rate Limiting\n\nRate limiting protects the API from abuse.\n\n## Caching\n\nThe caching middleware provides response caching for improved performance.\n\n### Configuration\n\n```yaml\ncache:\n  enabled: true\n  ttl: 300  # seconds\n  maxSize: 1000  # entries\n```\n\n### Cache Keys\n\nCache keys are generated based on:\n- Request method\n- Request path\n- Query parameters\n- Selected headers\n\n### Cache Invalidation\n\nCache can be invalidated via:\n- TTL expiration\n- Manual purge: `POST /admin/cache/purge`\n- Pattern-based purge: `POST /admin/cache/purge?pattern=/api/users/*`\n\n## Authentication\n\nJWT-based authentication is supported.\n",
+          "diff": "@@ -6,5 +6,29 @@\n \n Rate limiting protects the API from abuse.\n \n+## Caching\n+\n+The caching middleware provides response caching for improved performance.\n+\n+### Configuration\n+\n+```yaml\n+cache:\n+  enabled: true\n+  ttl: 300  # seconds\n+  maxSize: 1000  # entries\n+```\n+\n+### Cache Keys\n+\n+Cache keys are generated based on:\n+- Request method\n+- Request path\n+- Query parameters\n+- Selected headers\n+\n+### Cache Invalidation\n+\n+Cache can be invalidated via TTL or manual purge.\n+\n ## Authentication\n \n JWT-based authentication is supported.\n"
+        }
+      ]
+    },
+    {
+      "id": "prop_004",
+      "projectId": "proj_001",
+      "status": "approved",
+      "summary": "Fixed typos in README and updated installation instructions.",
+      "createdAt": "2026-01-10T09:00:00Z",
+      "scanId": "scan_002",
+      "driftItemIds": [],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.0.0-def456",
+      "files": [
+        {
+          "path": "README.md",
+          "before": "# React Dashboard\n\n## Instalation\n\n```bash\nnpm instal\n```\n",
+          "after": "# React Dashboard\n\n## Installation\n\n```bash\nnpm install\n```\n",
+          "diff": "@@ -1,7 +1,7 @@\n # React Dashboard\n \n-## Instalation\n+## Installation\n \n ```bash\n-npm instal\n+npm install\n ```\n"
+        }
+      ],
+      "approvedBy": "user_01",
+      "approvedAt": "2026-01-10T10:00:00Z"
+    },
+    {
+      "id": "prop_005",
+      "projectId": "proj_001",
+      "status": "published",
+      "summary": "Added getting started guide for new developers.",
+      "createdAt": "2026-01-08T14:00:00Z",
+      "scanId": null,
+      "driftItemIds": [],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.0.0-def456",
+      "files": [
+        {
+          "path": "docs/getting-started.md",
+          "before": "",
+          "after": "# Getting Started\n\nWelcome to React Dashboard!\n\n## Prerequisites\n\n- Node.js 18+\n- npm or yarn\n\n## Quick Start\n\n1. Clone the repo\n2. Run `npm install`\n3. Run `npm run dev`\n\nVisit http://localhost:3000 to see your dashboard.\n",
+          "diff": "@@ -0,0 +1,15 @@\n+# Getting Started\n+\n+Welcome to React Dashboard!\n+\n+## Prerequisites\n+\n+- Node.js 18+\n+- npm or yarn\n+\n+## Quick Start\n+\n+1. Clone the repo\n+2. Run `npm install`\n+3. Run `npm run dev`\n"
+        }
+      ],
+      "approvedBy": "user_01",
+      "approvedAt": "2026-01-08T15:00:00Z",
+      "publishResult": {
+        "prUrl": "https://github.com/alexdev/react-dashboard/pull/45",
+        "prNumber": 45,
+        "publishedAt": "2026-01-08T15:05:00Z"
+      }
+    },
+    {
+      "id": "prop_006",
+      "projectId": "proj_001",
+      "status": "rejected",
+      "summary": "Suggested reorganizing the entire documentation structure.",
+      "createdAt": "2026-01-07T11:00:00Z",
+      "scanId": null,
+      "driftItemIds": [],
+      "modelLabel": "OpenAI (app key)",
+      "promptVersion": "v2.0.0-def456",
+      "files": [],
+      "rejectionReason": "Too large of a change. Need to break this down into smaller, incremental updates."
+    }
+  ]
+}

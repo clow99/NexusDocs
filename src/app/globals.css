@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91%;
+    --input: 214.3 31.8% 91%;
+    --ring: 221.2 83% 53%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91% 60%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217.2 32% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --border: 217.2 32% 17%;
+    --input: 217.2 32% 17%;
+    --ring: 224.3 76% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 3px;
+  }
+}
+
+/* Diff viewer styles */
+.diff-added {
+  @apply bg-green-500/10 text-green-700 dark:text-green-400;
+}
+
+.diff-removed {
+  @apply bg-red-500/10 text-red-700 dark:text-red-400;
+}
+
+.diff-context {
+  @apply text-muted-foreground;
+}
+
+/* Markdown preview styles */
+.markdown-preview {
+  @apply max-w-none text-foreground;
+}
+
+.markdown-preview h1 {
+  @apply text-2xl font-bold mt-6 mb-4;
+}
+
+.markdown-preview h2 {
+  @apply text-xl font-semibold mt-5 mb-3;
+}
+
+.markdown-preview h3 {
+  @apply text-lg font-medium mt-4 mb-2;
+}
+
+.markdown-preview p {
+  @apply my-2;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  @apply my-2 pl-6;
+}
+
+.markdown-preview li {
+  @apply my-1;
+}
+
+.markdown-preview code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+}
+
+.markdown-preview pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
+}
+
+.markdown-preview pre code {
+  @apply bg-transparent p-0;
+}
+
+.markdown-preview a {
+  @apply text-primary underline underline-offset-2;
+}
+
+.markdown-preview blockquote {
+  @apply border-l-4 border-muted pl-4 italic my-4;
+}
+
+.markdown-preview table {
+  @apply w-full border-collapse my-4;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  @apply border border-border px-3 py-2 text-left;
+}
+
+.markdown-preview th {
+  @apply bg-muted font-medium;
+}

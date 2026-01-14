@@ -1,0 +1,328 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Users & Authentication (NextAuth.js)
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  name          String?
+  image         String?   @db.VarChar(512)
+  avatarUrl     String?   @map("avatar_url") @db.VarChar(512)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // NextAuth.js relationships
+  accounts Account[]
+  sessions Session[]
+
+  // App relationships
+  githubConnection GitHubConnection?
+  projects         Project[]
+  auditEvents      AuditEvent[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model GitHubConnection {
+  id              String    @id @default(uuid())
+  userId          String    @unique @map("user_id")
+  accessToken     String    @map("access_token") @db.VarChar(512)
+  tokenType       TokenType @map("token_type")
+  githubUserId    String?   @map("github_user_id") @db.VarChar(50)
+  githubUsername  String?   @map("github_username")
+  githubEmail     String?   @map("github_email")
+  scopes          Json?
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([githubUsername])
+  @@map("github_connections")
+}
+
+enum TokenType {
+  oauth
+  pat
+}
+
+// ============================================
+// Projects
+// ============================================
+
+model Project {
+  id                     String    @id @default(uuid())
+  userId                 String    @map("user_id")
+  name                   String
+  repoOwner              String    @map("repo_owner")
+  repoName               String    @map("repo_name")
+  enabled                Boolean   @default(true)
+  lastScanAt             DateTime? @map("last_scan_at")
+  driftOpenCount         Int       @default(0) @map("drift_open_count")
+  proposalsPendingCount  Int       @default(0) @map("proposals_pending_count")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settings        ProjectSettings?
+  scans           Scan[]
+  driftItems      DriftItem[]
+  proposals       Proposal[]
+  auditEvents     AuditEvent[]
+
+  @@unique([userId, repoOwner, repoName])
+  @@index([userId])
+  @@map("projects")
+}
+
+model ProjectSettings {
+  id                String        @id @default(uuid())
+  projectId         String        @unique @map("project_id")
+  scanFrequency     ScanFrequency @default(daily) @map("scan_frequency")
+  targetBranch      String        @default("main") @map("target_branch")
+  docsPaths         Json          @default("[]") @map("docs_paths")
+  codePaths         Json          @default("[]") @map("code_paths")
+  fileAllowlist     Json          @default("[]") @map("file_allowlist")
+  aiModel           String        @default("gpt-4") @map("ai_model") @db.VarChar(100)
+  autoApprove       Boolean       @default(false) @map("auto_approve")
+  prTitleTemplate   String?       @map("pr_title_template")
+  prBodyTemplate    String?       @map("pr_body_template") @db.Text
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Relationships
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_settings")
+}
+
+enum ScanFrequency {
+  hourly
+  daily
+  weekly
+}
+
+// ============================================
+// Scans & Drift Detection
+// ============================================
+
+model Scan {
+  id              String      @id @default(uuid())
+  projectId       String      @map("project_id")
+  status          ScanStatus  @default(pending)
+  startedAt       DateTime?   @map("started_at")
+  completedAt     DateTime?   @map("completed_at")
+  commitSha       String?     @map("commit_sha") @db.VarChar(40)
+  baseCommitSha   String?     @map("base_commit_sha") @db.VarChar(40)
+  filesScanned    Int         @default(0) @map("files_scanned")
+  driftItemsFound Int         @default(0) @map("drift_items_found")
+  progressPercent Int         @default(0) @map("progress_percent")
+  progressPhase   String?     @map("progress_phase") @db.VarChar(100)
+  progressMessage String?     @map("progress_message") @db.Text
+  errorMessage    String?     @map("error_message") @db.Text
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relationships
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  driftItems DriftItem[]
+  proposals  Proposal[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("scans")
+}
+
+enum ScanStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+model DriftItem {
+  id                     String     @id @default(uuid())
+  projectId              String     @map("project_id")
+  scanId                 String     @map("scan_id")
+  filePath               String     @map("file_path") @db.VarChar(512)
+  driftType              DriftType  @map("drift_type")
+  summary                String     @db.Text
+  details                Json?
+  severity               Severity   @default(medium)
+  resolved               Boolean    @default(false)
+  resolvedAt             DateTime?  @map("resolved_at")
+  resolvedByProposalId   String?    @map("resolved_by_proposal_id")
+  createdAt              DateTime   @default(now()) @map("created_at")
+
+  // Relationships
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scan    Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([scanId])
+  @@index([resolved])
+  @@index([projectId, resolved])
+  @@map("drift_items")
+}
+
+enum DriftType {
+  outdated
+  missing
+  inconsistent
+}
+
+enum Severity {
+  low
+  medium
+  high
+}
+
+// ============================================
+// AI Proposals
+// ============================================
+
+model Proposal {
+  id                  String          @id @default(uuid())
+  projectId           String          @map("project_id")
+  scanId              String?         @map("scan_id")
+  status              ProposalStatus  @default(pending)
+  summary             String          @db.Text
+  modelLabel          String          @map("model_label") @db.VarChar(100)
+  generationMetadata  Json?           @map("generation_metadata")
+  rejectionReason     String?         @map("rejection_reason") @db.Text
+  approvedAt          DateTime?       @map("approved_at")
+  rejectedAt          DateTime?       @map("rejected_at")
+  publishedAt         DateTime?       @map("published_at")
+  publishResult       Json?           @map("publish_result")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  // Relationships
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scan    Scan?          @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  files   ProposalFile[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([projectId, status])
+  @@index([createdAt])
+  @@map("proposals")
+}
+
+enum ProposalStatus {
+  pending
+  approved
+  rejected
+  published
+}
+
+model ProposalFile {
+  id              String           @id @default(uuid())
+  proposalId      String           @map("proposal_id")
+  filePath        String           @map("file_path") @db.VarChar(512)
+  operation       FileOperation
+  originalContent String?          @map("original_content") @db.LongText
+  proposedContent String?          @map("proposed_content") @db.LongText
+  unifiedDiff     String?          @map("unified_diff") @db.LongText
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  // Relationships
+  proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
+  @@map("proposal_files")
+}
+
+enum FileOperation {
+  create
+  update
+  delete
+}
+
+// ============================================
+// Audit Log
+// ============================================
+
+model AuditEvent {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  projectId  String?   @map("project_id")
+  eventType  String    @map("event_type") @db.VarChar(100)
+  action     String
+  entityType String?   @map("entity_type") @db.VarChar(100)
+  entityId   String?   @map("entity_id")
+  metadata   Json?
+  ipAddress  String?   @map("ip_address") @db.VarChar(45)
+  userAgent  String?   @map("user_agent") @db.VarChar(512)
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([projectId, eventType, createdAt])
+  @@map("audit_events")
+}

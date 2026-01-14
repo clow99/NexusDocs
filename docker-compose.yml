@@ -1,0 +1,12 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: nexusdocs
+        container_name: nexusdocs
+        restart: unless-stopped
+        ports:
+            - "3000:3000"
+        volumes:
+            - /usr/share/nginx/:/etc/nginx/ssl/:ro

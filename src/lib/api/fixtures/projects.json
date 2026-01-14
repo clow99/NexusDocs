@@ -1,0 +1,278 @@
+{
+  "projects": [
+    {
+      "id": "proj_001",
+      "name": "React Dashboard",
+      "repoOwner": "alexdev",
+      "repoName": "react-dashboard",
+      "defaultBranch": "main",
+      "enabled": true,
+      "lastScanAt": "2026-01-13T14:30:00Z",
+      "nextScanAt": "2026-01-14T14:30:00Z",
+      "driftOpenCount": 3,
+      "proposalsPendingCount": 2,
+      "createdAt": "2024-06-15T10:00:00Z",
+      "updatedAt": "2026-01-13T14:30:00Z"
+    },
+    {
+      "id": "proj_002",
+      "name": "API Gateway",
+      "repoOwner": "alexdev",
+      "repoName": "api-gateway",
+      "defaultBranch": "main",
+      "enabled": true,
+      "lastScanAt": "2026-01-13T10:00:00Z",
+      "nextScanAt": "2026-01-13T22:00:00Z",
+      "driftOpenCount": 1,
+      "proposalsPendingCount": 1,
+      "createdAt": "2024-08-20T14:00:00Z",
+      "updatedAt": "2026-01-13T10:00:00Z"
+    },
+    {
+      "id": "proj_003",
+      "name": "Design System",
+      "repoOwner": "acme-corp",
+      "repoName": "design-system",
+      "defaultBranch": "main",
+      "enabled": true,
+      "lastScanAt": "2026-01-12T08:00:00Z",
+      "nextScanAt": "2026-01-19T08:00:00Z",
+      "driftOpenCount": 0,
+      "proposalsPendingCount": 0,
+      "createdAt": "2024-10-01T09:00:00Z",
+      "updatedAt": "2026-01-12T08:00:00Z"
+    },
+    {
+      "id": "proj_004",
+      "name": "Backend Services",
+      "repoOwner": "acme-corp",
+      "repoName": "backend-services",
+      "defaultBranch": "main",
+      "enabled": false,
+      "lastScanAt": "2026-01-05T12:00:00Z",
+      "nextScanAt": null,
+      "driftOpenCount": 5,
+      "proposalsPendingCount": 0,
+      "createdAt": "2024-11-15T11:00:00Z",
+      "updatedAt": "2026-01-05T12:00:00Z"
+    }
+  ],
+  "settings": {
+    "proj_001": {
+      "projectId": "proj_001",
+      "scanSchedule": {
+        "preset": "daily",
+        "customDays": [],
+        "customTime": "14:30",
+        "timezone": "America/New_York",
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "08:00"
+      },
+      "updateFrequency": {
+        "maxProposalsPerDay": 5,
+        "maxProposalsPerWeek": 20,
+        "ignorePatterns": ["^chore:", "^deps:", "\\[skip-docs\\]"],
+        "onlyMergedPRs": true
+      },
+      "docTargets": [
+        {
+          "type": "readme",
+          "enabled": true,
+          "paths": ["README.md"],
+          "config": {}
+        },
+        {
+          "type": "guides",
+          "enabled": true,
+          "paths": ["docs/**/*.md"],
+          "config": {}
+        },
+        {
+          "type": "api",
+          "enabled": true,
+          "paths": ["docs/api/**/*.md"],
+          "config": {
+            "sourceOfTruth": "src/**/*.ts",
+            "outputPath": "docs/api",
+            "format": "markdown"
+          }
+        }
+      ],
+      "codePathFilters": {
+        "includePatterns": ["src/**/*", "lib/**/*"],
+        "excludePatterns": ["**/*.test.js", "**/*.spec.js", "**/node_modules/**"]
+      },
+      "docPathFilters": {
+        "includePatterns": ["docs/**/*.md", "README.md"],
+        "excludePatterns": ["docs/archive/**"]
+      },
+      "aiPolicy": {
+        "tonePreset": "professional",
+        "linkStyle": "relative",
+        "glossaryTerms": ["React", "Dashboard", "Component", "Hook"],
+        "doNotChangeMarkers": ["<!-- DO NOT EDIT -->", "<!-- AUTO-GENERATED -->"],
+        "allowedFiles": ["README.md", "docs/**/*.md"],
+        "requireManualApproval": true
+      },
+      "publishPolicy": {
+        "prOnly": true,
+        "prBranchPrefix": "docs/update-",
+        "reviewers": []
+      }
+    },
+    "proj_002": {
+      "projectId": "proj_002",
+      "scanSchedule": {
+        "preset": "hourly",
+        "customDays": [],
+        "customTime": null,
+        "timezone": "America/New_York",
+        "quietHoursStart": null,
+        "quietHoursEnd": null
+      },
+      "updateFrequency": {
+        "maxProposalsPerDay": 10,
+        "maxProposalsPerWeek": 50,
+        "ignorePatterns": ["^chore:"],
+        "onlyMergedPRs": false
+      },
+      "docTargets": [
+        {
+          "type": "readme",
+          "enabled": true,
+          "paths": ["README.md"],
+          "config": {}
+        },
+        {
+          "type": "api",
+          "enabled": true,
+          "paths": ["docs/api/**/*.md"],
+          "config": {
+            "sourceOfTruth": "openapi.yaml",
+            "outputPath": "docs/api",
+            "format": "openapi"
+          }
+        }
+      ],
+      "codePathFilters": {
+        "includePatterns": ["src/**/*", "api/**/*"],
+        "excludePatterns": ["**/*.test.go"]
+      },
+      "docPathFilters": {
+        "includePatterns": ["docs/**/*.md", "README.md"],
+        "excludePatterns": []
+      },
+      "aiPolicy": {
+        "tonePreset": "technical",
+        "linkStyle": "absolute",
+        "glossaryTerms": ["API", "Gateway", "Rate Limiting", "Cache"],
+        "doNotChangeMarkers": [],
+        "allowedFiles": ["README.md", "docs/**/*.md"],
+        "requireManualApproval": true
+      },
+      "publishPolicy": {
+        "prOnly": true,
+        "prBranchPrefix": "docs/",
+        "reviewers": ["lead-dev"]
+      }
+    },
+    "proj_003": {
+      "projectId": "proj_003",
+      "scanSchedule": {
+        "preset": "weekly",
+        "customDays": ["monday"],
+        "customTime": "08:00",
+        "timezone": "UTC",
+        "quietHoursStart": null,
+        "quietHoursEnd": null
+      },
+      "updateFrequency": {
+        "maxProposalsPerDay": 3,
+        "maxProposalsPerWeek": 10,
+        "ignorePatterns": [],
+        "onlyMergedPRs": true
+      },
+      "docTargets": [
+        {
+          "type": "readme",
+          "enabled": true,
+          "paths": ["README.md"],
+          "config": {}
+        },
+        {
+          "type": "guides",
+          "enabled": true,
+          "paths": ["docs/components/**/*.md"],
+          "config": {}
+        }
+      ],
+      "codePathFilters": {
+        "includePatterns": ["src/components/**/*"],
+        "excludePatterns": ["**/*.stories.jsx"]
+      },
+      "docPathFilters": {
+        "includePatterns": ["docs/**/*.md"],
+        "excludePatterns": []
+      },
+      "aiPolicy": {
+        "tonePreset": "friendly",
+        "linkStyle": "relative",
+        "glossaryTerms": ["Component", "Token", "Theme", "Variant"],
+        "doNotChangeMarkers": ["<!-- BRAND GUIDELINES -->"],
+        "allowedFiles": ["docs/**/*.md"],
+        "requireManualApproval": true
+      },
+      "publishPolicy": {
+        "prOnly": true,
+        "prBranchPrefix": "docs/",
+        "reviewers": []
+      }
+    },
+    "proj_004": {
+      "projectId": "proj_004",
+      "scanSchedule": {
+        "preset": "daily",
+        "customDays": [],
+        "customTime": "12:00",
+        "timezone": "UTC",
+        "quietHoursStart": null,
+        "quietHoursEnd": null
+      },
+      "updateFrequency": {
+        "maxProposalsPerDay": 5,
+        "maxProposalsPerWeek": 25,
+        "ignorePatterns": [],
+        "onlyMergedPRs": true
+      },
+      "docTargets": [
+        {
+          "type": "readme",
+          "enabled": true,
+          "paths": ["README.md"],
+          "config": {}
+        }
+      ],
+      "codePathFilters": {
+        "includePatterns": ["services/**/*"],
+        "excludePatterns": []
+      },
+      "docPathFilters": {
+        "includePatterns": ["docs/**/*.md"],
+        "excludePatterns": []
+      },
+      "aiPolicy": {
+        "tonePreset": "technical",
+        "linkStyle": "relative",
+        "glossaryTerms": [],
+        "doNotChangeMarkers": [],
+        "allowedFiles": ["README.md"],
+        "requireManualApproval": true
+      },
+      "publishPolicy": {
+        "prOnly": true,
+        "prBranchPrefix": "docs/",
+        "reviewers": []
+      }
+    }
+  }
+}

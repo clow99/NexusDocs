@@ -1,0 +1,175 @@
+{
+  "events": [
+    {
+      "id": "evt_001",
+      "at": "2026-01-13T14:35:00Z",
+      "type": "proposal.created",
+      "actor": "system",
+      "projectId": "proj_001",
+      "metadata": {
+        "proposalId": "prop_001",
+        "summary": "Add documentation for the new Chart component"
+      }
+    },
+    {
+      "id": "evt_002",
+      "at": "2026-01-13T14:32:15Z",
+      "type": "scan.completed",
+      "actor": "system",
+      "projectId": "proj_001",
+      "metadata": {
+        "scanId": "scan_001",
+        "source": "scheduled",
+        "driftItemsCreated": 3
+      }
+    },
+    {
+      "id": "evt_003",
+      "at": "2026-01-13T14:30:00Z",
+      "type": "scan.started",
+      "actor": "scheduler",
+      "projectId": "proj_001",
+      "metadata": {
+        "scanId": "scan_001",
+        "source": "scheduled"
+      }
+    },
+    {
+      "id": "evt_004",
+      "at": "2026-01-13T10:02:00Z",
+      "type": "scan.completed",
+      "actor": "system",
+      "projectId": "proj_002",
+      "metadata": {
+        "scanId": "scan_004",
+        "source": "scheduled",
+        "driftItemsCreated": 1
+      }
+    },
+    {
+      "id": "evt_005",
+      "at": "2026-01-12T16:01:30Z",
+      "type": "scan.completed",
+      "actor": "system",
+      "projectId": "proj_001",
+      "metadata": {
+        "scanId": "scan_002",
+        "source": "manual",
+        "driftItemsCreated": 1
+      }
+    },
+    {
+      "id": "evt_006",
+      "at": "2026-01-12T16:00:00Z",
+      "type": "scan.started",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_001",
+      "metadata": {
+        "scanId": "scan_002",
+        "source": "manual"
+      }
+    },
+    {
+      "id": "evt_007",
+      "at": "2026-01-10T10:00:00Z",
+      "type": "proposal.approved",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_001",
+      "metadata": {
+        "proposalId": "prop_004"
+      }
+    },
+    {
+      "id": "evt_008",
+      "at": "2026-01-08T15:05:00Z",
+      "type": "proposal.published",
+      "actor": "system",
+      "projectId": "proj_001",
+      "metadata": {
+        "proposalId": "prop_005",
+        "prUrl": "https://github.com/alexdev/react-dashboard/pull/45",
+        "prNumber": 45
+      }
+    },
+    {
+      "id": "evt_009",
+      "at": "2026-01-08T15:00:00Z",
+      "type": "proposal.approved",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_001",
+      "metadata": {
+        "proposalId": "prop_005"
+      }
+    },
+    {
+      "id": "evt_010",
+      "at": "2026-01-07T12:00:00Z",
+      "type": "proposal.rejected",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_001",
+      "metadata": {
+        "proposalId": "prop_006",
+        "reason": "Too large of a change"
+      }
+    },
+    {
+      "id": "evt_011",
+      "at": "2026-01-05T12:00:00Z",
+      "type": "project.disabled",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_004",
+      "metadata": {
+        "reason": "Pausing scans for maintenance"
+      }
+    },
+    {
+      "id": "evt_012",
+      "at": "2024-11-15T11:00:00Z",
+      "type": "project.created",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_004",
+      "metadata": {
+        "repoFullName": "acme-corp/backend-services"
+      }
+    },
+    {
+      "id": "evt_013",
+      "at": "2024-10-01T09:00:00Z",
+      "type": "project.created",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_003",
+      "metadata": {
+        "repoFullName": "acme-corp/design-system"
+      }
+    },
+    {
+      "id": "evt_014",
+      "at": "2024-08-20T14:00:00Z",
+      "type": "project.created",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_002",
+      "metadata": {
+        "repoFullName": "alexdev/api-gateway"
+      }
+    },
+    {
+      "id": "evt_015",
+      "at": "2024-06-15T10:00:00Z",
+      "type": "project.created",
+      "actor": "user",
+      "userId": "user_01",
+      "projectId": "proj_001",
+      "metadata": {
+        "repoFullName": "alexdev/react-dashboard"
+      }
+    }
+  ]
+}
