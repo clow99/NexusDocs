@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -14,14 +15,20 @@ function LoginContent() {
       <div className="w-full max-w-md p-8">
         {/* Logo and branding */}
         <div className="text-center mb-8">
-          <Image
-            src="/nexusdocs_logo.png"
-            alt="NexusDocs"
-            width={800}
-            height={240}
-            className="mx-auto h-16 w-auto"
-            priority
-          />
+          <Link
+            href="/"
+            className="inline-block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            aria-label="Go to home"
+          >
+            <Image
+              src="/nexusdocs_logo.png"
+              alt="NexusDocs"
+              width={800}
+              height={240}
+              className="mx-auto h-16 w-auto"
+              priority
+            />
+          </Link>
         </div>
 
         {/* Login card */}

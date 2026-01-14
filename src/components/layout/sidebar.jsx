@@ -48,7 +48,11 @@ export function Sidebar() {
     <aside className="flex h-full w-64 flex-col border-r bg-card">
       {/* Logo */}
       <div className="flex h-24 items-center border-b px-6">
-        <div className="relative h-16 w-full">
+        <Link
+          href="/app/projects"
+          className="relative h-16 w-full rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="Go to projects"
+        >
           <Image
             src="/nexusdocs_logo.png"
             alt="NexusDocs"
@@ -57,7 +61,7 @@ export function Sidebar() {
             sizes="256px"
             priority
           />
-        </div>
+        </Link>
       </div>
 
       {/* Project Switcher */}
