@@ -198,6 +198,8 @@ function hasDocsPathsConfigured(settings) {
   const raw = settings?.docsPaths;
   if (raw === undefined || raw === null) return false;
   if (typeof raw === "string" && raw.trim() === "") return false;
+  // Treat an empty array as "not configured" so new projects fall back to defaults.
+  if (Array.isArray(raw) && raw.length === 0) return false;
   return true;
 }
 
@@ -476,7 +478,18 @@ async function generateDocWithLLM({ digest, target, repoSummary, packageJson, ap
     {
       role: "system",
       content:
-        "You are an expert technical writer. Produce concise, accurate Markdown documentation tailored to the requested document type. Do not include YAML frontmatter. Keep headings meaningful. Avoid hallucinating; if unsure, omit.",
+        [
+          "You are an expert technical writer improving an existing repository documentation file.",
+          "",
+          "Rules (critical):",
+          "- You will be given existingMarkdown (may be empty). If it is already complete enough, return it unchanged.",
+          "- Otherwise, make minimal, targeted edits. Preserve structure, headings, and useful details.",
+          "- Do NOT delete large sections unless they are clearly wrong/outdated AND you replace them with better content.",
+          "- Prefer adding/adjusting over rewriting.",
+          "- Do not include YAML frontmatter.",
+          "- Output ONLY the final Markdown content (no code fences, no explanations).",
+          "- Avoid hallucinating; if unsure, omit rather than invent.",
+        ].join("\n"),
     },
     {
       role: "user",
@@ -484,6 +497,8 @@ async function generateDocWithLLM({ digest, target, repoSummary, packageJson, ap
         {
           targetType: target?.type || "Documentation",
           outputPath: target?.paths?.[0] || null,
+          operation: target?.existingMarkdown && String(target.existingMarkdown).trim() ? "update" : "create",
+          existingMarkdown: target?.existingMarkdown || "",
           constraints: Array.isArray(constraints)
             ? constraints.map((c) => String(c || "").trim()).filter(Boolean)
             : [],
@@ -663,12 +678,33 @@ export async function scanRepoAndGenerateDocProposals({
 
     const outputPath = inferOutputPathFromGlob(firstGlob, fallbackDir, "README.md");
 
+    // If the output file already exists, prefer updating it (minimal diff) rather than regenerating
+    // a brand-new document that overwrites useful content.
+    let existingMarkdown = "";
+    try {
+      const existing = await fetchRepoFileIfExists({
+        gitProvider,
+        owner,
+        repo,
+        path: outputPath,
+        ref,
+        ...(token ? { token } : {}),
+      });
+      existingMarkdown = existing?.exists ? String(existing.content ?? "") : "";
+    } catch {
+      existingMarkdown = "";
+    }
+    // Cap existing content to keep prompts bounded (very large docs can exceed context limits).
+    if (existingMarkdown.length > 80_000) {
+      existingMarkdown = existingMarkdown.slice(0, 80_000);
+    }
+
     let markdown = null;
     if (repoDigest && hasOpenAI) {
       try {
         markdown = await generateDocWithLLM({
           digest: repoDigest,
-          target,
+          target: { ...target, existingMarkdown },
           repoSummary,
           packageJson,
           apiRoutes,
@@ -681,13 +717,18 @@ export async function scanRepoAndGenerateDocProposals({
     }
 
     if (!markdown) {
-      markdown = generateMarkdownDocs({
-        targetType: target.type,
-        repoSummary,
-        packageJson,
-        apiRoutes,
-        constraints,
-      });
+      // Built-in generator is intentionally conservative: if a doc already exists,
+      // don't overwrite it with a generic template.
+      markdown =
+        existingMarkdown && existingMarkdown.trim()
+          ? existingMarkdown
+          : generateMarkdownDocs({
+              targetType: target.type,
+              repoSummary,
+              packageJson,
+              apiRoutes,
+              constraints,
+            });
     }
 
     proposals.push({

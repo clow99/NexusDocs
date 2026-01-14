@@ -57,7 +57,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { repoOwner, repoName, name } = body;
+    const { repoOwner, repoName, name, docsPaths } = body;
 
     if (!repoOwner || !repoName) {
       return NextResponse.json(
@@ -65,6 +65,22 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    const sanitizedDocsPaths = Array.isArray(docsPaths)
+      ? docsPaths
+          .map((t) => {
+            const type = String(t?.type || "").trim().slice(0, 120);
+            const enabled = t?.enabled !== false;
+            const rawPaths = Array.isArray(t?.paths) ? t.paths : t?.paths ? [t.paths] : [];
+            const paths = rawPaths
+              .map((p) => String(p || "").trim())
+              .filter(Boolean)
+              .slice(0, 25);
+            if (!type) return null;
+            return { type, enabled, paths };
+          })
+          .filter(Boolean)
+      : undefined;
 
     // Check if project already exists
     const existingProject = await prisma.project.findUnique({
@@ -94,6 +110,7 @@ export async function POST(request) {
         settings: {
           create: {
             // Use defaults from schema
+            ...(sanitizedDocsPaths !== undefined && { docsPaths: sanitizedDocsPaths }),
           },
         },
       },

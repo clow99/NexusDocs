@@ -153,12 +153,11 @@ export default function SettingsPage({ params }) {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (settings && !isInitialized) {
-      const hasStoredDocsPaths =
-        settings.docsPaths !== undefined && settings.docsPaths !== null && settings.docsPaths !== "";
+      const normalizedDocsPaths = normalizeDocsPaths(settings.docsPaths);
+      const hasStoredDocsPaths = normalizedDocsPaths.length > 0;
 
       if (hasStoredDocsPaths) {
-        const rawTargets = normalizeDocsPaths(settings.docsPaths);
-        setDocTargets(mergeDocTargetsFromSettings(rawTargets));
+        setDocTargets(mergeDocTargetsFromSettings(normalizedDocsPaths));
       } else {
         setDocTargets(buildDefaultDocTargets());
       }

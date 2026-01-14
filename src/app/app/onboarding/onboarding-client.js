@@ -9,12 +9,67 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useGitHubRepos, useGitHubPATConnect } from "@/hooks/use-auth";
 import { useCreateProject } from "@/hooks/use-projects";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const steps = ["Connect GitHub", "Select Repositories", "Create Projects"];
+
+const DOCUMENT_PRESETS = [
+  {
+    type: "README",
+    label: "README",
+    description: "Project overview and quickstart.",
+    paths: ["README.md"],
+    defaultEnabled: true,
+  },
+  {
+    type: "API Reference",
+    label: "API Reference",
+    description: "Endpoints and usage details extracted from the repo.",
+    paths: ["docs/api/reference.md"],
+    defaultEnabled: false,
+  },
+  {
+    type: "User Guide",
+    label: "User Guide",
+    description: "How-to docs for day-to-day usage.",
+    paths: ["docs/guides/user-guide.md"],
+    defaultEnabled: false,
+  },
+  {
+    type: "Tutorial",
+    label: "Tutorial",
+    description: "Step-by-step walkthroughs for onboarding.",
+    paths: ["docs/tutorials/getting-started.md"],
+    defaultEnabled: false,
+  },
+  {
+    type: "Architecture",
+    label: "Architecture",
+    description: "High-level system and repo layout.",
+    paths: ["docs/architecture/overview.md"],
+    defaultEnabled: false,
+  },
+];
+
+function buildDefaultDocTargets() {
+  return DOCUMENT_PRESETS.map((p) => ({
+    type: p.type,
+    paths: p.paths,
+    enabled: p.defaultEnabled,
+  }));
+}
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -31,6 +86,9 @@ export default function OnboardingClient() {
   const [patToken, setPatToken] = useState("");
   const [selectedRepos, setSelectedRepos] = useState([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isCreatingProjects, setIsCreatingProjects] = useState(false);
+  const [docPickerOpen, setDocPickerOpen] = useState(false);
+  const [docTargets, setDocTargets] = useState(() => buildDefaultDocTargets());
   const { toast } = useToast();
 
   const patConnect = useGitHubPATConnect();
@@ -103,19 +161,38 @@ export default function OnboardingClient() {
     });
   };
 
-  const handleCreateProjects = async () => {
+  const toggleDocument = (type, checked) => {
+    setDocTargets((prev) =>
+      prev.map((t) => (String(t.type) === String(type) ? { ...t, enabled: Boolean(checked) } : t))
+    );
+  };
+
+  const handleConfirmCreateProjects = async () => {
+    const enabledCount = docTargets.filter((t) => t?.enabled !== false).length;
+    if (enabledCount === 0) {
+      toast({
+        variant: "destructive",
+        title: "Select at least one document",
+        description: "Choose which docs NexusDocs should generate (e.g. README).",
+      });
+      return;
+    }
+
     try {
+      setIsCreatingProjects(true);
       for (const repo of selectedRepos) {
         await createProject.mutateAsync({
           repoOwner: repo.owner,
           repoName: repo.name,
           name: repo.name,
+          docsPaths: docTargets,
         });
       }
       toast({
         title: "Projects created!",
         description: `Created ${selectedRepos.length} project(s)`,
       });
+      setDocPickerOpen(false);
       router.push("/app/projects");
     } catch (err) {
       toast({
@@ -123,6 +200,8 @@ export default function OnboardingClient() {
         title: "Failed to create projects",
         description: err.message,
       });
+    } finally {
+      setIsCreatingProjects(false);
     }
   };
 
@@ -297,8 +376,11 @@ export default function OnboardingClient() {
               <Button variant="outline" onClick={() => setCurrentStep(1)}>
                 Back
               </Button>
-              <Button onClick={handleCreateProjects} disabled={createProject.isPending}>
-                {createProject.isPending ? (
+              <Button
+                onClick={() => setDocPickerOpen(true)}
+                disabled={createProject.isPending || isCreatingProjects}
+              >
+                {createProject.isPending || isCreatingProjects ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Check className="mr-2 h-4 w-4" />
@@ -309,6 +391,61 @@ export default function OnboardingClient() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={docPickerOpen} onOpenChange={(open) => (!isCreatingProjects ? setDocPickerOpen(open) : null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Select documents to generate</DialogTitle>
+            <DialogDescription>
+              Pick the docs NexusDocs should create/update for each new project. You can change this later in Project
+              Settings → Documents.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {DOCUMENT_PRESETS.map((preset) => {
+              const target = docTargets.find((t) => String(t.type) === preset.type) || {
+                type: preset.type,
+                paths: preset.paths,
+                enabled: false,
+              };
+              return (
+                <div key={preset.type} className="rounded-lg border p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <Switch
+                        checked={Boolean(target.enabled)}
+                        onCheckedChange={(checked) => toggleDocument(preset.type, checked)}
+                        disabled={isCreatingProjects}
+                      />
+                      <div className="space-y-1">
+                        <Label className="text-base">{preset.label}</Label>
+                        <p className="text-sm text-muted-foreground">{preset.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Output:{" "}
+                          <code>
+                            {Array.isArray(target.paths) ? target.paths.join(", ") : String(target.paths || "")}
+                          </code>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDocPickerOpen(false)} disabled={isCreatingProjects}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmCreateProjects} disabled={isCreatingProjects}>
+              {isCreatingProjects ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Create projects
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

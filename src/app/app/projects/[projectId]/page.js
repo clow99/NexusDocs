@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -29,16 +29,67 @@ export default function ProjectOverviewPage({ params }) {
   const resolvedParams = use(params);
   const { projectId } = resolvedParams;
   const { data: project, isLoading: projectLoading } = useProject(projectId);
-  const { data: scansData } = useScans(projectId);
+  const scansQuery = useScans(projectId);
+  const { data: scansData } = scansQuery;
   const { data: proposalsData } = useProposals(projectId, { status: "pending" });
   const runScan = useRunScan(projectId);
   const { toast } = useToast();
+  const [optimisticScanMessage, setOptimisticScanMessage] = useState(null);
 
   const recentScans = scansData?.scans?.slice(0, 5) || [];
   const pendingProposals = proposalsData?.proposals || [];
 
+  const activeScan = useMemo(() => {
+    const scans = scansData?.scans || [];
+    return (
+      scans.find((s) => s.status === "running" || s.status === "pending") ||
+      null
+    );
+  }, [scansData]);
+
+  const scanStatusText = useMemo(() => {
+    const msg = activeScan?.progress?.message;
+    if (msg) return msg;
+    if (optimisticScanMessage) return optimisticScanMessage;
+    if (activeScan?.progress?.phase) {
+      const phase = String(activeScan.progress.phase);
+      if (phase === "tree") return "Listing repository files...";
+      if (phase === "read_files") return "Scanning files...";
+      if (phase === "ai_digest") return "Summarizing repository...";
+      if (phase === "generate_docs") return "Building documentation...";
+      if (phase === "proposal") return "Preparing documentation proposal...";
+      if (phase === "db") return "Saving proposal...";
+      if (phase === "done") return "Completed";
+      if (phase === "failed") return "Scan failed";
+    }
+    return null;
+  }, [activeScan, optimisticScanMessage]);
+
+  // While the scan request is in-flight, aggressively poll scan progress so the UI updates.
+  useEffect(() => {
+    if (!runScan.isPending) return;
+    setOptimisticScanMessage((prev) => prev || "Starting scan...");
+
+    // Kick an immediate refresh, then poll quickly for progress updates.
+    scansQuery.refetch?.();
+    const interval = setInterval(() => {
+      scansQuery.refetch?.();
+    }, 1200);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runScan.isPending, projectId]);
+
+  // Clear optimistic text when scan finishes.
+  useEffect(() => {
+    if (!runScan.isPending && !activeScan) {
+      setOptimisticScanMessage(null);
+    }
+  }, [runScan.isPending, activeScan]);
+
   const handleRunScan = async () => {
     try {
+      setOptimisticScanMessage("Starting scan...");
       await runScan.mutateAsync();
       toast({
         title: "Scan complete",
@@ -119,6 +170,23 @@ export default function ProjectOverviewPage({ params }) {
           </Button>
         </div>
       </div>
+
+      {(runScan.isPending || activeScan) && scanStatusText ? (
+        <div className="flex items-start justify-between gap-4 rounded-md border bg-muted/40 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
+            <div>
+              <div className="text-sm font-medium">{scanStatusText}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {activeScan?.progress?.percent ?? 0}%
+              </div>
+            </div>
+          </div>
+          <Badge variant="secondary" className="shrink-0">
+            {activeScan?.progress?.phase ? String(activeScan.progress.phase).replaceAll("_", " ") : "running"}
+          </Badge>
+        </div>
+      ) : null}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -215,9 +283,22 @@ export default function ProjectOverviewPage({ params }) {
                         <p className="text-xs text-muted-foreground">
                           {formatRelativeTime(scan.startedAt || scan.createdAt)}
                         </p>
+                        {scan.errorMessage && (
+                          <p className="mt-1 text-xs text-destructive line-clamp-2">
+                            {scan.errorMessage}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <Badge variant={scan.status === "succeeded" ? "success" : "secondary"}>
+                    <Badge
+                      variant={
+                        scan.status === "succeeded"
+                          ? "success"
+                          : scan.status === "failed"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
                       {scan.status}
                     </Badge>
                   </Link>

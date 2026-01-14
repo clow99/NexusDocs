@@ -17,6 +17,12 @@ import auditData from "./fixtures/audit.json";
 const MIN_LATENCY = 100;
 const MAX_LATENCY = 500;
 
+// In-memory mock state (per browser session / hot reload)
+const mockState = {
+  projects: [...(projectsData.projects || [])],
+  settings: { ...(projectsData.settings || {}) },
+};
+
 /**
  * Simulate network latency
  */
@@ -105,7 +111,7 @@ const routes = {
 
   // Projects
   "GET /projects": async () => {
-    return { projects: projectsData.projects };
+    return { projects: mockState.projects };
   },
 
   "POST /projects": async (_, body) => {
@@ -123,7 +129,12 @@ const routes = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    // In real mock, we'd add to the array
+    mockState.projects.unshift(newProject);
+    mockState.settings[newProject.id] = {
+      ...(mockState.settings[newProject.id] || {}),
+      projectId: newProject.id,
+      docsPaths: Array.isArray(body?.docsPaths) ? body.docsPaths : [],
+    };
     return newProject;
   },
 
@@ -161,7 +172,7 @@ const dynamicRoutes = [
   {
     pattern: "GET /projects/:projectId",
     handler: async (params) => {
-      const project = projectsData.projects.find((p) => p.id === params.projectId);
+      const project = mockState.projects.find((p) => p.id === params.projectId);
       if (!project) {
         throw { code: "NOT_FOUND", message: "Project not found", status: 404 };
       }
@@ -171,21 +182,20 @@ const dynamicRoutes = [
   {
     pattern: "GET /projects/:projectId/settings",
     handler: async (params) => {
-      const settings = projectsData.settings[params.projectId];
-      if (!settings) {
-        throw { code: "NOT_FOUND", message: "Settings not found", status: 404 };
-      }
-      return settings;
+      const existing = mockState.settings[params.projectId];
+      if (existing) return existing;
+      const created = { projectId: params.projectId, docsPaths: [] };
+      mockState.settings[params.projectId] = created;
+      return created;
     },
   },
   {
     pattern: "PUT /projects/:projectId/settings",
     handler: async (params, body) => {
-      const settings = projectsData.settings[params.projectId];
-      if (!settings) {
-        throw { code: "NOT_FOUND", message: "Settings not found", status: 404 };
-      }
-      return { ...settings, ...body };
+      const existing = mockState.settings[params.projectId] || { projectId: params.projectId };
+      const merged = { ...existing, ...body, projectId: params.projectId };
+      mockState.settings[params.projectId] = merged;
+      return merged;
     },
   },
   {
