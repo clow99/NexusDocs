@@ -4,9 +4,10 @@ AI-Assisted Repository Documentation Management
 
 NexusDocs is a Next.js frontend application for managing repository documentation with AI-assisted updates driven by GitHub code changes. It allows users to connect GitHub repositories, configure documentation targets, schedule scans for documentation drift, and review/approve AI-generated documentation updates.
 
-<img width="1918" height="940" alt="image" src="https://github.com/user-attachments/assets/bea76b2f-af48-41e8-b79e-2c3917bb0f17" />
-<img width="1918" height="940" alt="image" src="https://github.com/user-attachments/assets/4d4e9ee6-5deb-44a2-b891-8c985ecbdc88" />
-<img width="1918" height="940" alt="image" src="https://github.com/user-attachments/assets/de1eca4e-bb7a-4c8d-8ff4-8f1689f47a0c" />
+<img width="500" height="245" alt="image" src="https://github.com/user-attachments/assets/bea76b2f-af48-41e8-b79e-2c3917bb0f17" />
+<img width="500" height="245" alt="image" src="https://github.com/user-attachments/assets/4d4e9ee6-5deb-44a2-b891-8c985ecbdc88" />
+<img width="500" height="245" alt="image" src="https://github.com/user-attachments/assets/de1eca4e-bb7a-4c8d-8ff4-8f1689f47a0c" />
+<img width="500" height="245" alt="image" src="https://github.com/user-attachments/assets/6dc603ae-d107-4e42-bd76-4aee0a6847fb" />
 
 
 ## Features
