@@ -291,6 +291,23 @@ docker run --rm -p 3000:3000 --name nexusdocs \
 
 `docker-compose.yml` currently builds the image and maps **host `3000` → container `3000`** (direct-to-Next.js). It also mounts `/etc/nginx/ssl/` as read-only for certificates, but `default.conf` is currently configured for HTTP on port 80 only.
 
+Current `docker-compose.yml`:
+
+```yml
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: nexusdocs
+        container_name: nexusdocs
+        restart: unless-stopped
+        ports:
+            - "3000:3000"
+        volumes:
+            - /usr/share/nginx/:/etc/nginx/ssl/:ro
+```
+
 ```bash
 docker compose up --build
 ```
