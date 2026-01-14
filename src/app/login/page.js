@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -13,25 +14,14 @@ function LoginContent() {
       <div className="w-full max-w-md p-8">
         {/* Logo and branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-lg shadow-indigo-500/25">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">NexusDocs</h1>
-          <p className="text-slate-400">
-            AI-Assisted Documentation Management
-          </p>
+          <Image
+            src="/nexusdocs_logo.png"
+            alt="NexusDocs"
+            width={800}
+            height={240}
+            className="mx-auto h-16 w-auto"
+            priority
+          />
         </div>
 
         {/* Login card */}

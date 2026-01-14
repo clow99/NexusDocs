@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -46,11 +47,17 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-card">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <FileText className="h-4 w-4 text-primary-foreground" />
+      <div className="flex h-24 items-center border-b px-6">
+        <div className="relative h-16 w-full">
+          <Image
+            src="/nexusdocs_logo.png"
+            alt="NexusDocs"
+            fill
+            className="object-contain object-left"
+            sizes="256px"
+            priority
+          />
         </div>
-        <span className="text-lg font-semibold">NexusDocs</span>
       </div>
 
       {/* Project Switcher */}

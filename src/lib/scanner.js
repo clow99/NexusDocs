@@ -25,6 +25,12 @@ const DEFAULT_MAX_FILES_TO_READ = 40;
 const DEFAULT_MAX_FILE_BYTES = 200_000; // 200KB per file
 const DEFAULT_MAX_TOTAL_CHARS = 220_000; // across all fetched file contents (prompt/context budget)
 
+// Repo digest (LLM) prompt budgeting:
+// Keep this comfortably under typical org TPM limits to avoid 429 "Request too large".
+const DEFAULT_DIGEST_MAX_TOTAL_EXCERPT_CHARS = 90_000; // across all file excerpts included in the digest prompt
+const DEFAULT_DIGEST_MAX_EXCERPT_CHARS_PER_FILE = 2_500; // per file
+const DEFAULT_DIGEST_MAX_OUTPUT_TOKENS = 900; // cap completion size (helps reduce requested TPM)
+
 const DEFAULT_IGNORED_PREFIXES = [
   ".git/",
   ".github/",
@@ -392,11 +398,56 @@ async function generateRepoDigestLLM({ repoSummary, packageJson, apiRoutes, cont
   const { readModel } = getOpenAIModels();
 
   const scripts = packageJson?.scripts ? Object.entries(packageJson.scripts) : [];
-  const files = [...contentsByPath.entries()].map(([path, content]) => ({
-    path,
-    // Keep excerpts manageable to avoid blowing context.
-    excerpt: String(content || "").slice(0, 4000),
-  }));
+
+  const maxTotalExcerptChars =
+    Number(process.env.OPENAI_DIGEST_MAX_TOTAL_EXCERPT_CHARS) || DEFAULT_DIGEST_MAX_TOTAL_EXCERPT_CHARS;
+  const maxExcerptCharsPerFile =
+    Number(process.env.OPENAI_DIGEST_MAX_EXCERPT_CHARS_PER_FILE) || DEFAULT_DIGEST_MAX_EXCERPT_CHARS_PER_FILE;
+  const maxOutputTokens = Number(process.env.OPENAI_DIGEST_MAX_OUTPUT_TOKENS) || DEFAULT_DIGEST_MAX_OUTPUT_TOKENS;
+
+  // Prioritize high-signal files first, then include additional files until we hit the excerpt budget.
+  const priorityPaths = [
+    "package.json",
+    "README.md",
+    "readme.md",
+    "next.config.js",
+    "next.config.mjs",
+    "prisma/schema.prisma",
+  ];
+  const entries = [...contentsByPath.entries()].map(([path, content]) => [toPosixPath(path), content]);
+  const seen = new Set();
+  const orderedEntries = [];
+  for (const p of priorityPaths) {
+    const hit = entries.find(([path]) => path === p);
+    if (hit && !seen.has(hit[0])) {
+      orderedEntries.push(hit);
+      seen.add(hit[0]);
+    }
+  }
+  for (const e of entries) {
+    if (seen.has(e[0])) continue;
+    orderedEntries.push(e);
+    seen.add(e[0]);
+  }
+
+  const files = [];
+  let usedChars = 0;
+  for (const [path, content] of orderedEntries) {
+    if (usedChars >= maxTotalExcerptChars) break;
+    const remaining = maxTotalExcerptChars - usedChars;
+    const excerpt = String(content || "").slice(0, Math.min(maxExcerptCharsPerFile, remaining));
+    if (!excerpt) continue;
+    files.push({ path, excerpt });
+    usedChars += excerpt.length;
+  }
+  // Safety net: ensure we include at least one file if any exist.
+  if (files.length === 0 && orderedEntries.length > 0) {
+    const [path, content] = orderedEntries[0];
+    files.push({
+      path,
+      excerpt: String(content || "").slice(0, maxExcerptCharsPerFile),
+    });
+  }
 
   const messages = [
     {
@@ -452,12 +503,27 @@ async function generateRepoDigestLLM({ repoSummary, packageJson, apiRoutes, cont
     },
   ];
 
-  const completion = await client.chat.completions.create({
-    model: readModel,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-    messages,
-  });
+  async function runDigestRequest({ outputTokens }) {
+    return await client.chat.completions.create({
+      model: readModel,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      // Cap output to reduce requested TPM (input+output).
+      max_tokens: outputTokens,
+      messages,
+    });
+  }
+
+  let completion;
+  try {
+    completion = await runDigestRequest({ outputTokens: maxOutputTokens });
+  } catch (err) {
+    // If the org TPM budget is tight, retry once with a smaller output cap.
+    const msg = String(err?.message || "");
+    const isTooLarge = err?.status === 429 && (msg.includes("Request too large") || msg.includes("tokens per min"));
+    if (!isTooLarge) throw err;
+    completion = await runDigestRequest({ outputTokens: Math.max(400, Math.floor(maxOutputTokens * 0.7)) });
+  }
 
   const text = completion.choices?.[0]?.message?.content?.trim();
   if (!text) return null;
@@ -474,6 +540,33 @@ async function generateDocWithLLM({ digest, target, repoSummary, packageJson, ap
   if (!client) return null;
   const { writeModel } = getOpenAIModels();
 
+  const targetType = String(target?.type || "Documentation");
+  const isReadmeTarget =
+    targetType.toLowerCase().includes("readme") ||
+    String(target?.paths?.[0] || "").toLowerCase().endsWith("readme.md");
+
+  const README_STYLE_GUIDE = [
+    "README style guide (use this structure and level of detail):",
+    "- Start with: `# <ProjectName>` then a short tagline line, then a 1–2 paragraph overview.",
+    "- Include these sections when applicable (prefer these headings/ordering):",
+    "  - `## Features` (bulleted, bold labels)",
+    "  - `## Tech Stack` (bulleted)",
+    "  - `## Getting Started` → `### Prerequisites`, `### Installation`, and a clear local run flow",
+    "  - `### Environment Variables` with a single `env` code block and brief inline comments",
+    "  - `### Database Setup (Prisma)` if Prisma/DB is used (commands like `npx prisma db push`, `npx prisma studio`)",
+    "  - `## Mock Mode` if supported (what it does/doesn't do, where fixtures live)",
+    "  - `## Project Structure` with a tree code block",
+    "  - `## Routes` as a table",
+    "  - `## API Endpoints` grouped by area (Auth/Projects/Scans/etc.)",
+    "  - `## Security Notes` with explicit warnings about secrets",
+    "  - `## Development` (common npm scripts)",
+    "  - `## Docker` (build + run examples + compose notes)",
+    "  - `## Cron / Scheduled Scans` if relevant",
+    "  - `## License`",
+    "- Prefer concrete commands, paths, and endpoint lists derived from repo context; omit anything you can't support.",
+    "- Never include real secrets/tokens; use placeholders and keep the security warning.",
+  ].join("\n");
+
   const messages = [
     {
       role: "system",
@@ -481,6 +574,7 @@ async function generateDocWithLLM({ digest, target, repoSummary, packageJson, ap
         [
           "You are an expert technical writer improving an existing repository documentation file.",
           "",
+          ...(isReadmeTarget ? [README_STYLE_GUIDE, ""] : []),
           "Rules (critical):",
           "- You will be given existingMarkdown (may be empty). If it is already complete enough, return it unchanged.",
           "- Otherwise, make minimal, targeted edits. Preserve structure, headings, and useful details.",

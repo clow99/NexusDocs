@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, User, Search, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,23 +16,170 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser } from "@/hooks/use-auth";
+import { useProjects } from "@/hooks/use-projects";
+import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
 export function Header() {
   const { data: userData } = useUser();
   const user = userData?.user;
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  // No real notifications feed is wired yet; don't show an unread dot by default.
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  const router = useRouter();
+  const { data: projectsData, isLoading: projectsLoading } = useProjects();
+  const projects = projectsData?.projects || [];
+
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchRef = useRef(null);
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+
+    return projects
+      .filter((p) => {
+        const haystack = [
+          p.name,
+          `${p.repoOwner}/${p.repoName}`,
+          p.repoOwner,
+          p.repoName,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(q);
+      })
+      .slice(0, 8);
+  }, [projects, query]);
+
+  const showDropdown = searchOpen && (query.trim().length > 0 || projectsLoading);
+
+  useEffect(() => {
+    function onDocumentMouseDown(e) {
+      if (!searchRef.current) return;
+      if (!searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+        setActiveIndex(-1);
+      }
+    }
+
+    document.addEventListener("mousedown", onDocumentMouseDown);
+    return () => document.removeEventListener("mousedown", onDocumentMouseDown);
+  }, []);
+
+  function navigateToProject(project) {
+    if (!project?.id) return;
+    setSearchOpen(false);
+    setActiveIndex(-1);
+    router.push(`/app/projects/${project.id}`);
+  }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-24 items-center justify-between border-b bg-card px-6">
       {/* Search */}
       <div className="flex items-center gap-4">
-        <div className="relative w-64">
+        <div ref={searchRef} className="relative w-80 md:w-96">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search projects..."
-            className="pl-9"
+            className="h-12 pl-9 text-base"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSearchOpen(true);
+              setActiveIndex(-1);
+            }}
+            onFocus={() => setSearchOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchOpen(false);
+                setActiveIndex(-1);
+                e.currentTarget.blur();
+                return;
+              }
+
+              if (!showDropdown) return;
+
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                const max = Math.max(results.length - 1, 0);
+                setActiveIndex((idx) => Math.min(idx + 1, max));
+                return;
+              }
+
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setActiveIndex((idx) => Math.max(idx - 1, 0));
+                return;
+              }
+
+              if (e.key === "Enter") {
+                if (activeIndex >= 0 && results[activeIndex]) {
+                  e.preventDefault();
+                  navigateToProject(results[activeIndex]);
+                } else if (results.length === 1) {
+                  e.preventDefault();
+                  navigateToProject(results[0]);
+                }
+              }
+            }}
+            role="combobox"
+            aria-expanded={showDropdown}
+            aria-controls="header-project-search-results"
           />
+
+          {showDropdown ? (
+            <div
+              id="header-project-search-results"
+              className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+            >
+              <div className="max-h-80 overflow-y-auto p-1">
+                {projectsLoading ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Loading projects…
+                  </div>
+                ) : results.length > 0 ? (
+                  results.map((project, idx) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onMouseEnter={() => setActiveIndex(idx)}
+                      onMouseDown={(e) => {
+                        // Prevent input blur before click runs (keeps dropdown stable).
+                        e.preventDefault();
+                      }}
+                      onClick={() => navigateToProject(project)}
+                      className={cn(
+                        "flex w-full flex-col items-start gap-0.5 rounded-sm px-3 py-2 text-left text-sm transition-colors",
+                        idx === activeIndex
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <span className="truncate font-medium">{project.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {project.repoOwner}/{project.repoName}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    No matching projects.
+                  </div>
+                )}
+              </div>
+
+              {!projectsLoading ? (
+                <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+                  Tip: use ↑/↓ then Enter
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 
