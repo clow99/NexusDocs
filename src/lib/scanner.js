@@ -29,7 +29,7 @@ const DEFAULT_MAX_TOTAL_CHARS = 220_000; // across all fetched file contents (pr
 // Keep this comfortably under typical org TPM limits to avoid 429 "Request too large".
 const DEFAULT_DIGEST_MAX_TOTAL_EXCERPT_CHARS = 90_000; // across all file excerpts included in the digest prompt
 const DEFAULT_DIGEST_MAX_EXCERPT_CHARS_PER_FILE = 2_500; // per file
-const DEFAULT_DIGEST_MAX_OUTPUT_TOKENS = 900; // cap completion size (helps reduce requested TPM)
+const DEFAULT_DIGEST_MAX_OUTPUT_TOKENS = 1600; // cap completion size (helps reduce requested TPM)
 
 const DEFAULT_IGNORED_PREFIXES = [
   ".git/",
@@ -777,12 +777,30 @@ async function generateRepoDigestLLM({ repoSummary, packageJson, apiRoutes, cont
     completion = await runDigestRequest({ outputTokens: Math.max(400, Math.floor(maxOutputTokens * 0.7)) });
   }
 
+  // Check if the response was truncated due to max_tokens limit
+  const finishReason = completion.choices?.[0]?.finish_reason;
+  if (finishReason === "length") {
+    console.warn("Repo digest response was truncated (finish_reason=length), retrying with more tokens...");
+    try {
+      // Retry with double the tokens to get complete JSON
+      completion = await runDigestRequest({ outputTokens: Math.min(maxOutputTokens * 2, 4000) });
+    } catch (retryErr) {
+      console.error("Retry with more tokens failed:", retryErr);
+      // Continue with truncated response and let JSON parse fail gracefully below
+    }
+  }
+
   const text = completion.choices?.[0]?.message?.content?.trim();
   if (!text) return null;
   try {
     return JSON.parse(text);
   } catch (err) {
-    console.error("Failed to parse repo digest JSON from OpenAI:", err, text?.slice(0, 500));
+    const truncated = completion.choices?.[0]?.finish_reason === "length";
+    console.error(
+      `Failed to parse repo digest JSON from OpenAI${truncated ? " (response was truncated)" : ""}:`,
+      err,
+      text?.slice(0, 500)
+    );
     return null;
   }
 }
