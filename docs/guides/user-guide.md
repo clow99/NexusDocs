@@ -20,7 +20,7 @@ NexusDocs is a Next.js application for managing repository documentation with AI
      ```
 
 3. **Configure environment variables**
-   - Copy `.env.example` to `.env.local`
+   - Copy `.env.example` to `.env`
    - Set at least:
      - `NEXT_PUBLIC_APP_URL` — e.g. `http://localhost:3000`
      - `DATABASE_URL` — e.g. `mariadb://username:password@localhost:3306/nexusdocs`

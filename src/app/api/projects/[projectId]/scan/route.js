@@ -185,6 +185,7 @@ export async function POST(request, { params }) {
       await updateProgress({ phase: "proposal", percent: 88, message: "Preparing proposal diffs" });
 
       // Build proposal file changes (create/update docs files)
+      // Only include files where content actually differs
       const proposalFiles = [];
       for (const item of scanResult.proposals) {
         const existing = await fetchRepoFileIfExists({
@@ -198,42 +199,54 @@ export async function POST(request, { params }) {
 
         const before = existing.exists ? existing.content ?? "" : "";
         const after = item.markdown ?? "";
-        const operation = existing.exists ? "update" : "create";
-        const diff = createTwoFilesPatch(item.outputPath, item.outputPath, before, after);
+        
+        // Only add to proposal if content differs
+        if (before !== after) {
+          const operation = existing.exists ? "update" : "create";
+          const diff = createTwoFilesPatch(item.outputPath, item.outputPath, before, after);
 
-        proposalFiles.push({
-          filePath: item.outputPath,
-          operation,
-          originalContent: existing.exists ? before : null,
-          proposedContent: after,
-          unifiedDiff: diff,
-        });
+          proposalFiles.push({
+            filePath: item.outputPath,
+            operation,
+            originalContent: existing.exists ? before : null,
+            proposedContent: after,
+            unifiedDiff: diff,
+          });
+        }
       }
 
-      await updateProgress({ phase: "db", percent: 95, message: "Saving proposal" });
+      await updateProgress({ phase: "db", percent: 95, message: proposalFiles.length > 0 ? "Saving proposal" : "No changes detected" });
 
-      const proposalSummaryParts = scanResult.enabledTargets.map((t) => t.type).slice(0, 4);
-      const proposal = await prisma.proposal.create({
-        data: {
-          projectId,
-          scanId: scan.id,
-          status: project.settings?.autoApprove ? "approved" : "pending",
-          summary:
-            proposalSummaryParts.length > 0
-              ? `Generate ${proposalSummaryParts.join(", ")} docs`
-              : "Generate documentation updates",
-          modelLabel: process.env.OPENAI_API_KEY ? "OpenAI (app key)" : "Built-in generator",
-          generationMetadata: scanResult.generationMetadata,
-          ...(project.settings?.autoApprove ? { approvedAt: new Date() } : {}),
-          ...(proposalFiles.length ? { files: { create: proposalFiles } } : {}),
-        },
-        include: { files: true },
-      });
+      // Only create proposal if there are actual file changes
+      let proposal = null;
+      if (proposalFiles.length > 0) {
+        const proposalSummaryParts = scanResult.enabledTargets.map((t) => t.type).slice(0, 4);
+        proposal = await prisma.proposal.create({
+          data: {
+            projectId,
+            scanId: scan.id,
+            status: project.settings?.autoApprove ? "approved" : "pending",
+            summary:
+              proposalSummaryParts.length > 0
+                ? `Generate ${proposalSummaryParts.join(", ")} docs`
+                : "Generate documentation updates",
+            modelLabel: process.env.OPENAI_API_KEY ? "OpenAI (app key)" : "Built-in generator",
+            generationMetadata: scanResult.generationMetadata,
+            ...(project.settings?.autoApprove ? { approvedAt: new Date() } : {}),
+            files: { create: proposalFiles },
+          },
+          include: { files: true },
+        });
+      }
 
       // Update scan + project stats
       const pendingCount = await prisma.proposal.count({
         where: { projectId, status: "pending" },
       });
+
+      const finalMessage = proposalFiles.length > 0 
+        ? "Completed" 
+        : "Completed - No documentation changes detected";
 
       await prisma.scan.update({
         where: { id: scan.id },
@@ -244,7 +257,7 @@ export async function POST(request, { params }) {
           driftItemsFound: 0,
           progressPercent: 100,
           progressPhase: "done",
-          progressMessage: "Completed",
+          progressMessage: finalMessage,
           errorMessage: null,
         },
       });
@@ -267,14 +280,14 @@ export async function POST(request, { params }) {
             driftItemsFound: 0,
             progressPercent: 100,
             progressPhase: "done",
-            progressMessage: "Completed",
+            progressMessage: finalMessage,
             errorMessage: null,
           },
           {
             filesScanned: scanResult.filesScanned,
             commits: [],
             pullRequests: [],
-            proposalId: proposal.id,
+            proposalId: proposal?.id ?? null,
             source: "manual",
           }
         )

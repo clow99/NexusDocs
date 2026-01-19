@@ -21,7 +21,7 @@ function createPrismaClient() {
 
   if (!rawDatabaseUrl) {
     throw new Error(
-      "DATABASE_URL is not set. Set it in your environment (e.g. .env.local) to a MariaDB connection string like: mariadb://USER:PASSWORD@HOST:3306/DB"
+      "DATABASE_URL is not set. Set it in your environment (e.g. .env) to a MariaDB connection string like: mariadb://USER:PASSWORD@HOST:3306/DB"
     );
   }
 
@@ -52,7 +52,7 @@ function createPrismaClient() {
   }
   if (!url.password && process.env.DB_ALLOW_EMPTY_PASSWORD !== "true") {
     throw new Error(
-      "DATABASE_URL is missing a password (e.g. mysql://USER:PASSWORD@HOST:3306/DB). If your DB user has an empty password, set DB_ALLOW_EMPTY_PASSWORD=true. If you set DATABASE_URL as a Windows environment variable, it can override .env.local—update/remove it and restart the dev server."
+      "DATABASE_URL is missing a password (e.g. mysql://USER:PASSWORD@HOST:3306/DB). If your DB user has an empty password, set DB_ALLOW_EMPTY_PASSWORD=true. If you set DATABASE_URL as a Windows environment variable, it can override .env—update/remove it and restart the dev server."
     );
   }
 

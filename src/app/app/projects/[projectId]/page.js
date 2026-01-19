@@ -90,16 +90,24 @@ export default function ProjectOverviewPage({ params }) {
   const handleRunScan = async () => {
     try {
       setOptimisticScanMessage("Starting scan...");
-      await runScan.mutateAsync();
-      toast({
-        title: "Scan complete",
-        description: "Docs proposals were generated from your selected Documents.",
-        action: (
-          <ToastAction asChild altText="View proposals">
-            <Link href={`/app/projects/${projectId}/proposals`}>View proposals</Link>
-          </ToastAction>
-        ),
-      });
+      const scanResult = await runScan.mutateAsync();
+      
+      if (scanResult?.proposalId) {
+        toast({
+          title: "Scan complete",
+          description: "Docs proposals were generated from your selected Documents.",
+          action: (
+            <ToastAction asChild altText="View proposals">
+              <Link href={`/app/projects/${projectId}/proposals`}>View proposals</Link>
+            </ToastAction>
+          ),
+        });
+      } else {
+        toast({
+          title: "Scan complete",
+          description: "No documentation changes detected. All docs are up to date.",
+        });
+      }
     } catch (err) {
       toast({
         variant: "destructive",

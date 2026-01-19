@@ -53,7 +53,7 @@ ENV http_proxy=$HTTP_PROXY \
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Toronto
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates sendmail tzdata \
+    && apt-get install -y --no-install-recommends curl ca-certificates sendmail tzdata cron \
     && rm -rf /var/cache/apt/archives/* \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs nginx \
@@ -76,8 +76,16 @@ RUN rm /etc/nginx/sites-available/default \
 COPY ./default.conf /etc/nginx/sites-available/default
 RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
+# Copy scripts and make them executable
+COPY ./scripts/cron-scans.sh /usr/local/bin/cron-scans.sh
+COPY ./scripts/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/cron-scans.sh /usr/local/bin/start.sh
+
+# Create log file for cron
+RUN touch /var/log/cron-scans.log
+
 # Expose the application port
 EXPOSE 80
 
-# Start pm2 for Next.js and Nginx
-CMD ["sh", "-c", "pm2 start npm --name 'nextjs' -- run start && nginx -g 'daemon off;'"]
+# Use the startup script which configures cron and starts all services
+CMD ["/usr/local/bin/start.sh"]

@@ -49,7 +49,7 @@ npm install
 
 #### Configure environment
 
-Create a `.env.local` file in the project root and fill in required values (template below).
+Create a `.env` file in the project root and fill in required values (template below).
 
 Then create database tables:
 
@@ -67,7 +67,7 @@ Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
 ### Environment Variables
 
-Create a `.env.local` file (or set these in your deployment environment).
+Create a `.env` file (or set these in your deployment environment).
 
 ```env
 # App
@@ -108,7 +108,7 @@ GITHUB_REDIRECT_URI="http://localhost:3000/api/auth/github/callback"
 # CRON_SECRET="replace-me"
 ```
 
-> ⚠️ **Security Warning**: Never commit `.env.local` to version control. Keep secrets server-side only.
+> ⚠️ **Security Warning**: Never commit `.env` to version control. Keep secrets server-side only.
 
 ### Database Setup (Prisma)
 
@@ -128,7 +128,7 @@ See `DATABASE_SETUP.md` for a quick walkthrough.
 
 The application ships with a mock API layer for UI development:
 
-1. Set `NEXT_PUBLIC_MOCK_MODE=true` in `.env.local`
+1. Set `NEXT_PUBLIC_MOCK_MODE=true` in `.env`
 2. The browser API client will use local JSON fixtures in `src/lib/api/fixtures/`
 3. Simulated latency makes the UI feel realistic
 
@@ -348,7 +348,20 @@ Notes:
 
 ## Cron / Scheduled Scans
 
-For scheduled scans, call `GET` or `POST /api/cron/scans` from an external scheduler (e.g. Vercel Cron).
+Scheduled scans can be triggered in two ways:
+
+### Built-in Cron (Docker)
+
+When running in Docker, cron is automatically configured inside the container:
+- Runs every hour (at :00 minutes)
+- The endpoint handles frequency logic (hourly/daily/weekly) and commit change detection
+- Set `CRON_SECRET` environment variable in your Docker environment
+- Set `NEXT_PUBLIC_APP_URL` if your app is not accessible at `http://localhost:3000`
+- Logs are written to `/var/log/cron-scans.log` inside the container
+
+### External Scheduler
+
+Alternatively, call `GET` or `POST /api/cron/scans` from an external scheduler (e.g. Vercel Cron, GitHub Actions, etc.):
 
 - Set `CRON_SECRET`
 - Send `Authorization: Bearer <CRON_SECRET>`

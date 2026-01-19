@@ -10,3 +10,10 @@ services:
             - "3000:3000"
         volumes:
             - /usr/share/nginx/:/etc/nginx/ssl/:ro
+        # Uncomment and set these environment variables for cron scans:
+        # environment:
+        #   - CRON_SECRET=your-secret-here
+        #   - NEXT_PUBLIC_APP_URL=http://localhost:3000
+        # Or use env_file to load from .env file:
+        # env_file:
+        #   - .env

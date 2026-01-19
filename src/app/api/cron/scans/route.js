@@ -91,6 +91,26 @@ async function hasActiveScan(projectId) {
   return Boolean(active?.id);
 }
 
+async function hasHeadCommitChanged({ projectId, currentHeadSha }) {
+  if (!currentHeadSha) return true; // If we can't get current SHA, assume changed to be safe
+  
+  // Get the most recent completed scan for this project
+  const lastScan = await prisma.scan.findFirst({
+    where: {
+      projectId,
+      status: "completed",
+    },
+    select: { commitSha: true },
+    orderBy: { completedAt: "desc" },
+  });
+  
+  // If no previous scan, consider it changed
+  if (!lastScan || !lastScan.commitSha) return true;
+  
+  // Compare commit SHAs
+  return lastScan.commitSha !== currentHeadSha;
+}
+
 async function runScanForProject({ project, settings, token, headCommitSha }) {
   const now = new Date();
   let completedAt = new Date();
@@ -130,6 +150,8 @@ async function runScanForProject({ project, settings, token, headCommitSha }) {
 
     await updateProgress({ phase: "proposal", percent: 88, message: "Preparing proposal diffs" });
 
+    // Build proposal file changes (create/update docs files)
+    // Only include files where content actually differs
     const proposalFiles = [];
     for (const item of scanResult.proposals) {
       const existing = await fetchRepoFileIfExists({
@@ -143,40 +165,52 @@ async function runScanForProject({ project, settings, token, headCommitSha }) {
 
       const before = existing.exists ? existing.content ?? "" : "";
       const after = item.markdown ?? "";
-      const operation = existing.exists ? "update" : "create";
-      const diff = createTwoFilesPatch(item.outputPath, item.outputPath, before, after);
+      
+      // Only add to proposal if content differs
+      if (before !== after) {
+        const operation = existing.exists ? "update" : "create";
+        const diff = createTwoFilesPatch(item.outputPath, item.outputPath, before, after);
 
-      proposalFiles.push({
-        filePath: item.outputPath,
-        operation,
-        originalContent: existing.exists ? before : null,
-        proposedContent: after,
-        unifiedDiff: diff,
-      });
+        proposalFiles.push({
+          filePath: item.outputPath,
+          operation,
+          originalContent: existing.exists ? before : null,
+          proposedContent: after,
+          unifiedDiff: diff,
+        });
+      }
     }
 
-    await updateProgress({ phase: "db", percent: 95, message: "Saving proposal" });
+    await updateProgress({ phase: "db", percent: 95, message: proposalFiles.length > 0 ? "Saving proposal" : "No changes detected" });
 
-    const summaryParts = scanResult.enabledTargets.map((t) => t.type).slice(0, 4);
-    const proposal = await prisma.proposal.create({
-      data: {
-        projectId: project.id,
-        scanId: scan.id,
-        status: settings?.autoApprove ? "approved" : "pending",
-        summary:
-          summaryParts.length > 0
-            ? `Generate ${summaryParts.join(", ")} docs`
-            : "Generate documentation updates",
-        modelLabel: process.env.OPENAI_API_KEY ? "OpenAI (app key)" : "Built-in generator",
-        generationMetadata: scanResult.generationMetadata,
-        ...(settings?.autoApprove ? { approvedAt: new Date() } : {}),
-        files: { create: proposalFiles },
-      },
-    });
+    // Only create proposal if there are actual file changes
+    let proposal = null;
+    if (proposalFiles.length > 0) {
+      const summaryParts = scanResult.enabledTargets.map((t) => t.type).slice(0, 4);
+      proposal = await prisma.proposal.create({
+        data: {
+          projectId: project.id,
+          scanId: scan.id,
+          status: settings?.autoApprove ? "approved" : "pending",
+          summary:
+            summaryParts.length > 0
+              ? `Generate ${summaryParts.join(", ")} docs`
+              : "Generate documentation updates",
+          modelLabel: process.env.OPENAI_API_KEY ? "OpenAI (app key)" : "Built-in generator",
+          generationMetadata: scanResult.generationMetadata,
+          ...(settings?.autoApprove ? { approvedAt: new Date() } : {}),
+          files: { create: proposalFiles },
+        },
+      });
+    }
 
     const pendingCount = await prisma.proposal.count({
       where: { projectId: project.id, status: "pending" },
     });
+
+    const finalMessage = proposalFiles.length > 0 
+      ? "Completed" 
+      : "Completed - No documentation changes detected";
 
     await prisma.scan.update({
       where: { id: scan.id },
@@ -187,7 +221,7 @@ async function runScanForProject({ project, settings, token, headCommitSha }) {
         driftItemsFound: 0,
         progressPercent: 100,
         progressPhase: "done",
-        progressMessage: "Completed",
+        progressMessage: finalMessage,
         errorMessage: null,
       },
     });
@@ -200,7 +234,7 @@ async function runScanForProject({ project, settings, token, headCommitSha }) {
       },
     });
 
-    return { ok: true, scanId: scan.id, proposalId: proposal.id };
+    return { ok: true, scanId: scan.id, proposalId: proposal?.id ?? null };
   } catch (error) {
     const message =
       error?.message ||
@@ -264,10 +298,15 @@ async function handleCron(request) {
       token,
     });
 
-    const shouldScan = isDueByFrequency({ now, lastScanAt: project.lastScanAt, scanFrequency });
+    // Check if scan is due by frequency OR if head commit changed
+    const dueByFrequency = isDueByFrequency({ now, lastScanAt: project.lastScanAt, scanFrequency });
+    const headChanged = await hasHeadCommitChanged({ projectId: project.id, currentHeadSha: headCommitSha });
+    
+    const shouldScan = dueByFrequency || headChanged;
 
     if (!shouldScan) {
-      results.push({ projectId: project.id, skipped: true, reason: "not_due" });
+      const reason = !dueByFrequency && !headChanged ? "not_due" : "not_due";
+      results.push({ projectId: project.id, skipped: true, reason });
       continue;
     }
 

@@ -34,10 +34,10 @@ npm install
 1. Copy the example env file:
 
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 
-2. Edit `.env.local` and set at least:
+2. Edit `.env` and set at least:
 
    - `NEXT_PUBLIC_APP_URL=http://localhost:3000`
    - `DATABASE_URL=mariadb://username:password@localhost:3306/nexusdocs`
@@ -129,7 +129,7 @@ If AI features are not working, verify the AI status endpoint:
 
 - `GET /api/ai/status` — returns whether the AI provider (e.g. OpenAI) is correctly configured.
 
-Ensure your OpenAI API key (and any related settings) are present in `.env.local` and not exposed via `NEXT_PUBLIC_*` variables.
+Ensure your OpenAI API key (and any related settings) are present in `.env` and not exposed via `NEXT_PUBLIC_*` variables.
 
 ### 9. Troubleshooting
 
@@ -146,7 +146,7 @@ Common issues:
 
 - **AI not available**
   - Call `GET /api/ai/status` to check configuration.
-  - Confirm AI‑related secrets are set in `.env.local`.
+  - Confirm AI‑related secrets are set in `.env`.
 
 ### Next steps
 
